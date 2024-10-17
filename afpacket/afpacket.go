@@ -147,7 +147,7 @@ func (h *TPacket) bindToInterface(ifaceName string) error {
 		ifIndex = iface.Index
 	}
 	s := &unix.SockaddrLinklayer{
-		Protocol: htons(uint16(unix.ETH_P_ALL)),
+		Protocol: htons(uint16(h.opts.protocol)),
 		Ifindex:  ifIndex,
 	}
 	return unix.Bind(h.fd, s)
@@ -237,7 +237,7 @@ func NewTPacket(opts ...interface{}) (h *TPacket, err error) {
 	if h.opts, err = parseOptions(opts...); err != nil {
 		return nil, err
 	}
-	fd, err := unix.Socket(unix.AF_PACKET, int(h.opts.socktype), int(htons(unix.ETH_P_ALL)))
+	fd, err := unix.Socket(unix.AF_PACKET, int(h.opts.socktype), int(htons(uint16(h.opts.protocol))))
 	if err != nil {
 		return nil, err
 	}
@@ -293,10 +293,11 @@ func (h *TPacket) releaseCurrentPacket() error {
 // to old bytes when using ZeroCopyReadPacketData... if you need to keep data past
 // the next time you call ZeroCopyReadPacketData, use ReadPacketData, which copies
 // the bytes into a new buffer for you.
-//  tp, _ := NewTPacket(...)
-//  data1, _, _ := tp.ZeroCopyReadPacketData()
-//  // do everything you want with data1 here, copying bytes out of it if you'd like to keep them around.
-//  data2, _, _ := tp.ZeroCopyReadPacketData()  // invalidates bytes in data1
+//
+//	tp, _ := NewTPacket(...)
+//	data1, _, _ := tp.ZeroCopyReadPacketData()
+//	// do everything you want with data1 here, copying bytes out of it if you'd like to keep them around.
+//	data2, _, _ := tp.ZeroCopyReadPacketData()  // invalidates bytes in data1
 func (h *TPacket) ZeroCopyReadPacketData() (data []byte, ci gopacket.CaptureInfo, err error) {
 	h.mu.Lock()
 retry:

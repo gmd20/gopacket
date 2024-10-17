@@ -4,6 +4,7 @@
 // that can be found in the LICENSE file in the root of the source
 // tree.
 
+//go:build linux
 // +build linux
 
 package afpacket
@@ -47,6 +48,8 @@ func (t OptSocketType) String() string {
 	}
 	return "UnknownSocketType"
 }
+
+type OptProtocol int
 
 // TPacket version numbers for use with NewHandle.
 const (
@@ -125,6 +128,7 @@ type options struct {
 	pollTimeout    time.Duration
 	version        OptTPacketVersion
 	socktype       OptSocketType
+	protocol       OptProtocol
 	iface          string
 }
 
@@ -136,6 +140,7 @@ var defaultOpts = options{
 	pollTimeout:  DefaultPollTimeout,
 	version:      TPacketVersionHighestAvailable,
 	socktype:     SocketRaw,
+	protocol:     unix.ETH_P_ALL,
 }
 
 func parseOptions(opts ...interface{}) (ret options, err error) {
@@ -158,6 +163,8 @@ func parseOptions(opts ...interface{}) (ret options, err error) {
 			ret.iface = string(v)
 		case OptSocketType:
 			ret.socktype = v
+		case OptProtocol:
+			ret.protocol = v
 		case OptAddVLANHeader:
 			ret.addVLANHeader = bool(v)
 		default:
